@@ -6,7 +6,7 @@ import os
 # Page configuration
 # ----------------------------
 st.set_page_config(
-    page_title="Optimal Posting Time (Per Platform)",
+    page_title="Optimal Posting Time - Line Plot",
     layout="wide"
 )
 
@@ -18,7 +18,7 @@ def load_data():
     filename = "Untitled spreadsheet - Sheet1.csv"
 
     if not os.path.exists(filename):
-        st.error("CSV file not found")
+        st.error("CSV file not found. Please upload 'Untitled spreadsheet - Sheet1.csv'")
         st.stop()
 
     df = pd.read_csv(filename)
@@ -35,27 +35,30 @@ def load_data():
 df = load_data()
 
 # ----------------------------
-# Title
+# Dashboard title
 # ----------------------------
-st.title("⏰ Optimal Posting Time – Platform Wise")
-st.write("Each bar chart shows engagement across hours for one platform.")
+st.title("⏰ Optimal Posting Time Analysis (Line Plot)")
+st.write(
+    "Line plots show engagement trends across posting hours for each platform."
+)
 
 # ----------------------------
-# Separate Bar Charts for Each Platform
+# Platform-wise Line Plots
 # ----------------------------
 platforms = df["platform"].unique()
 
 for platform in platforms:
-    st.subheader(f"📱 {platform} – Engagement by Hour")
+    st.subheader(f"📱 {platform} – Engagement Trend by Hour")
 
     platform_df = df[df["platform"] == platform]
 
-    st.bar_chart(
+    # Line plot
+    st.line_chart(
         platform_df.groupby("hour")["engagement"].mean()
     )
 
 # ----------------------------
-# Best Hour Table (Optional but Good)
+# Best Posting Hour per Platform
 # ----------------------------
 best_hours = (
     df.groupby(["platform", "hour"])["engagement"]
@@ -64,5 +67,11 @@ best_hours = (
     .loc[lambda x: x.groupby("platform")["engagement"].idxmax()]
 )
 
-st.subheader("✅ Best Posting Hour per Platform")
+st.subheader("✅ Optimal Posting Hour (Per Platform)")
 st.dataframe(best_hours[["platform", "hour"]])
+
+# ----------------------------
+# Data table
+# ----------------------------
+with st.expander("📄 View Full Data"):
+    st.dataframe(df)
