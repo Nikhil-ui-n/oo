@@ -6,7 +6,7 @@ import os
 # Page configuration
 # ----------------------------
 st.set_page_config(
-    page_title="Optimal Posting Time by Platform",
+    page_title="Optimal Posting Time (Per Platform)",
     layout="wide"
 )
 
@@ -18,12 +18,12 @@ def load_data():
     filename = "Untitled spreadsheet - Sheet1.csv"
 
     if not os.path.exists(filename):
-        st.error("CSV file not found. Please upload 'Untitled spreadsheet - Sheet1.csv'")
+        st.error("CSV file not found")
         st.stop()
 
     df = pd.read_csv(filename)
 
-    # Date processing
+    # Date & time processing
     df["date"] = pd.to_datetime(df["date"])
     df["hour"] = df["date"].dt.hour
 
@@ -35,54 +35,34 @@ def load_data():
 df = load_data()
 
 # ----------------------------
-# Dashboard Title
+# Title
 # ----------------------------
-st.title("⏰ Optimal Posting Time by Platform")
-st.write("Best posting hour for each social media platform based on engagement.")
+st.title("⏰ Optimal Posting Time – Platform Wise")
+st.write("Each bar chart shows engagement across hours for one platform.")
 
 # ----------------------------
-# Optimal Posting Time per Platform
+# Separate Bar Charts for Each Platform
 # ----------------------------
-optimal_time_per_platform = (
-    df.groupby(["platform", "hour"])["engagement"]
-    .mean()
-    .reset_index()
-)
+platforms = df["platform"].unique()
 
-best_hours = (
-    optimal_time_per_platform
-    .loc[optimal_time_per_platform.groupby("platform")["engagement"].idxmax()]
-)
+for platform in platforms:
+    st.subheader(f"📱 {platform} – Engagement by Hour")
 
-# ----------------------------
-# KPI DISPLAY (ONE PER PLATFORM)
-# ----------------------------
-st.subheader("🔍 Optimal Posting Hour (Per Platform)")
+    platform_df = df[df["platform"] == platform]
 
-for _, row in best_hours.iterrows():
-    st.metric(
-        label=f"📱 {row['platform']}",
-        value=f"{int(row['hour'])}:00"
+    st.bar_chart(
+        platform_df.groupby("hour")["engagement"].mean()
     )
 
 # ----------------------------
-# BAR CHART (OPTIONAL BUT GOOD)
+# Best Hour Table (Optional but Good)
 # ----------------------------
-st.subheader("📊 Engagement by Hour (Per Platform)")
-
-selected_platform = st.selectbox(
-    "Select Platform",
-    df["platform"].unique()
+best_hours = (
+    df.groupby(["platform", "hour"])["engagement"]
+    .mean()
+    .reset_index()
+    .loc[lambda x: x.groupby("platform")["engagement"].idxmax()]
 )
 
-platform_df = df[df["platform"] == selected_platform]
-
-st.bar_chart(
-    platform_df.groupby("hour")["engagement"].mean()
-)
-
-# ----------------------------
-# Data Table
-# ----------------------------
-with st.expander("📄 View Data"):
-    st.dataframe(best_hours)
+st.subheader("✅ Best Posting Hour per Platform")
+st.dataframe(best_hours[["platform", "hour"]])
