@@ -6,7 +6,7 @@ import os
 # Page configuration
 # ----------------------------
 st.set_page_config(
-    page_title="Campaign ROI Dashboard",
+    page_title="Optimal Posting Time Dashboard",
     layout="wide"
 )
 
@@ -17,21 +17,20 @@ st.set_page_config(
 def load_data():
     filename = "Untitled spreadsheet - Sheet1.csv"
 
-    # Safety check for Streamlit Cloud
     if not os.path.exists(filename):
         st.error("CSV file not found. Please upload 'Untitled spreadsheet - Sheet1.csv'")
         st.stop()
 
     df = pd.read_csv(filename)
 
+    # Convert date column to datetime
+    df["date"] = pd.to_datetime(df["date"])
+
+    # Extract hour from date
+    df["hour"] = df["date"].dt.hour
+
     # Engagement calculation
     df["engagement"] = df["likes"] + df["comments"] + df["shares"]
-
-    # Assumed campaign cost (for academic project)
-    df["campaign_cost"] = 5000
-
-    # Campaign ROI calculation
-    df["roi"] = ((df["engagement"] - df["campaign_cost"]) / df["campaign_cost"]) * 100
 
     return df
 
@@ -40,14 +39,14 @@ df = load_data()
 # ----------------------------
 # Dashboard Title
 # ----------------------------
-st.title("💰 Campaign ROI Analysis Dashboard")
-st.write("This dashboard analyzes campaign Return on Investment (ROI) across platforms.")
+st.title("⏰ Optimal Posting Time Analysis")
+st.write("Identify the best time to post based on audience engagement.")
 
 # ----------------------------
-# ROI Calculation
+# Optimal Posting Time Calculation
 # ----------------------------
-best_roi_platform = (
-    df.groupby("platform")["roi"]
+optimal_posting_hour = (
+    df.groupby("hour")["engagement"]
     .mean()
     .idxmax()
 )
@@ -56,19 +55,19 @@ best_roi_platform = (
 # KPI Display
 # ----------------------------
 st.subheader("🔍 Key Insight")
-st.metric("💰 Best ROI Platform", best_roi_platform)
+st.metric("⏰ Optimal Posting Hour", f"{optimal_posting_hour}:00")
 
 # ----------------------------
-# ROI Visualization
+# Visualization
 # ----------------------------
-st.subheader("📉 Average Campaign ROI by Platform")
+st.subheader("📊 Engagement by Posting Hour")
 
 st.bar_chart(
-    df.groupby("platform")["roi"].mean()
+    df.groupby("hour")["engagement"].mean()
 )
 
 # ----------------------------
 # Data Table
 # ----------------------------
-with st.expander("📄 View Data with ROI"):
+with st.expander("📄 View Data"):
     st.dataframe(df)
